@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Forja do Herói: O Códice Interativo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Ancient Codex -->
+    <!-- Application Structure Plan: A thematic, task-oriented dashboard styled as a medieval codex. The core remains the interactive timeline ('A Jornada Diária'), allowing users to toggle between their different mission schedules ('No Castelo', 'Na Cidadela', 'O Repouso do Herói'). The core structure is preserved but re-skinned to enhance motivation through a fantasy/mythological narrative. The goal is to make the act of checking one's routine feel like consulting a quest log. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Schedules -> Goal: Organize/Compare -> Viz: Thematic Interactive Timeline (HTML/CSS/JS). Interaction: Toggling between schedules. Justification: Transforms a mundane schedule into an epic journey, increasing engagement. Library: Vanilla JS.
+        - Report Info: Time Allocation -> Goal: Visualize Proportions -> Viz: Thematic Donut Chart ('O Equilíbrio dos Reinos'). Interaction: Updates with timeline. Justification: Provides a high-level view of a hero's commitments. Library: Chart.js.
+        - Report Info: Foundational Principles -> Goal: Inform/Organize -> Viz: Thematic Accordion ('Os 4 Estandartes da Vontade'). Interaction: Click to reveal wisdom. Justification: Presents core concepts as sacred tenets. Library: Vanilla JS.
+        - Report Info: All text -> Goal: Enhance Theme -> Viz: Thematic Copywriting. Interaction: N/A. Justification: The primary driver of the medieval/mystical feel, turning tasks into quests and goals into legends.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { 
+            font-family: 'EB Garamond', serif; 
+            background-color: #F5EFE1; /* Old Parchment */
+            color: #4E4237; /* Dark Brown Text */
+        }
+        h1, h2, h3, h4, .nav-button, .day-toggle-button {
+            font-family: 'Cinzel', serif;
+        }
+        .nav-button.active { background-color: #8C2B2B; color: #F5EFE1; } /* Deep Red */
+        .nav-button { transition: background-color 0.3s, color 0.3s; color: #5D4037; }
+        .day-toggle-button.active { background-color: #5D4037; color: #F5EFE1; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2); } /* Darker Brown */
+        .day-toggle-button { transition: background-color 0.3s, color 0.3s; color: #5D4037; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .timeline-item-dot { min-width: 1rem; min-height: 1rem; }
+        .parchment-bg { background-color: #FDF6E3; border: 1px solid #DCD1B8; }
+        .header-main { color: #5D4037; }
+        .header-sub { color: #795548; }
+        .chart-container { position: relative; width: 100%; max-width: 400px; margin-left: auto; margin-right: auto; height: 300px; max-height: 350px; }
+        @media (min-width: 768px) { .chart-container { height: 350px; } }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold header-main">A Forja do Herói</h1>
+            <p class="mt-2 text-lg header-sub">O seu códice interativo para forjar uma nova era de disciplina.</p>
+        </header>
+
+        <nav class="flex justify-center mb-8 parchment-bg p-2 rounded-xl shadow-sm">
+            <div class="flex flex-wrap justify-center space-x-2">
+                <button data-target="painel" class="nav-button active py-2 px-4 rounded-lg font-bold">A Jornada Diária</button>
+                <button data-target="pilares" class="nav-button py-2 px-4 rounded-lg font-bold">Os 4 Estandartes</button>
+                <button data-target="alimentar" class="nav-button py-2 px-4 rounded-lg font-bold">O Festim do Guerreiro</button>
+                <button data-target="estrategias" class="nav-button py-2 px-4 rounded-lg font-bold">Pergaminhos de Sabedoria</button>
+            </div>
+        </nav>
+
+        <main>
+            <section id="painel" class="content-section active">
+                <div class="parchment-bg p-6 rounded-2xl shadow-lg">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+                        <div class="text-center md:text-left mb-4 md:mb-0">
+                            <h2 class="text-2xl font-bold header-main">O Roteiro da Missão</h2>
+                            <p class="header-sub">Escolha o seu domínio para desvendar o destino do dia.</p>
+                        </div>
+                        <div id="day-toggle-container" class="flex items-center space-x-2 bg-stone-300 p-1 rounded-lg">
+                            <button data-day="home" class="day-toggle-button active py-1 px-3 rounded-md font-medium">No Castelo</button>
+                            <button data-day="office" class="day-toggle-button py-1 px-3 rounded-md font-medium">Na Cidadela</button>
+                            <button data-day="weekend" class="day-toggle-button py-1 px-3 rounded-md font-medium">O Repouso do Herói</button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                        <div id="timeline-container" class="lg:col-span-3">
+                        </div>
+                        <div class="lg:col-span-2 flex flex-col items-center">
+                            <h3 class="text-xl font-bold header-main mb-2 text-center">O Equilíbrio dos Reinos</h3>
+                            <div class="chart-container">
+                                <canvas id="timeDistributionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="pilares" class="content-section">
+                 <div class="parchment-bg p-6 rounded-2xl shadow-lg">
+                    <div class="text-center mb-6">
+                        <h2 class="text-2xl font-bold header-main">Os 4 Estandartes da Vontade</h2>
+                        <p class="header-sub mt-1">Os pilares sobre os quais se erguem os grandes feitos.</p>
+                    </div>
+                    <div class="space-y-4" id="pillars-container">
+                    </div>
+                 </div>
+            </section>
+
+            <section id="alimentar" class="content-section">
+                <div class="parchment-bg p-6 rounded-2xl shadow-lg">
+                    <div class="text-center mb-6">
+                         <h2 class="text-2xl font-bold header-main">O Festim do Guerreiro</h2>
+                         <p class="header-sub mt-1">Forje sua força com o sustento dos campeões.</p>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2">
+                            <h3 class="text-xl font-bold mb-4 header-main">Tábua de Refeições</h3>
+                            <div class="overflow-x-auto rounded-lg border border-stone-400">
+                                <table class="w-full text-sm text-left text-stone-700">
+                                    <thead class="text-xs uppercase bg-stone-200 text-stone-800" style="font-family: 'Cinzel', serif;">
+                                        <tr>
+                                            <th scope="col" class="py-3 px-6">Banquete</th>
+                                            <th scope="col" class="py-3 px-6">Dias de Forja (Seg/Qua/Sex)</th>
+                                            <th scope="col" class="py-3 px-6">Dias de Conselho (Ter/Qui)</th>
+                                            <th scope="col" class="py-3 px-6">Dias de Celebração (Fim de Semana)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="meal-plan-body">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-4 header-main">Lista de Provisões</h3>
+                            <div id="shopping-list-container" class="space-y-4"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="estrategias" class="content-section">
+                <div class="parchment-bg p-6 rounded-2xl shadow-lg">
+                    <div class="text-center mb-6">
+                         <h2 class="text-2xl font-bold header-main">Pergaminhos de Sabedoria</h2>
+                         <p class="header-sub mt-1">Estratégias arcanas para cada faceta de sua jornada.</p>
+                    </div>
+                    <div id="strategies-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer class="text-center mt-12">
+            <p class="header-sub text-lg">Lembre-se, nobre cavaleiro: a lenda é escrita não em um dia, mas em cada passo da jornada.</p>
+        </footer>
+
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const data = {
+        schedule: {
+            home: [
+                { time: '06:30', title: 'O Despertar do Vigilante', icon: '🏺', detail: 'Beber água e saudar o sol com alongamentos.' },
+                { time: '07:00', title: 'O Desjejum do Herói', icon: '🍞', detail: 'Refeição nutritiva e consulta ao mapa do dia.' },
+                { time: '07:45', title: 'Estudo dos Glifos', icon: '📜', detail: '15 minutos com os tomos do DataCamp.' },
+                { time: '08:00', title: 'A Vigília Diurna', icon: '✒️', detail: 'Dedicação aos deveres do reino profissional.' },
+                { time: '12:00', title: 'A Pausa do Meio-dia', icon: '🍲', detail: 'Repasto preparado e uma breve patrulha ao ar livre.' },
+                { time: '13:00', title: 'A Vigília Vespertina', icon: '✒️', detail: 'Retorno aos deveres do reino.' },
+                { time: '15:00', title: 'O Chamado às Armas', icon: '⚔️', detail: 'Depor as ferramentas de trabalho, vestir a armadura de treino.' },
+                { time: '15:15', title: 'A Prova de Força', icon: '⚒️', detail: 'Forjar o corpo no templo de ferro.' },
+                { time: '16:30', title: 'O Repouso do Campeão', icon: '🌿', detail: 'Poção de recuperação, abluções e tempo de paz.' },
+                { time: '18:30', title: 'A Ceia', icon: '🍴', detail: 'Banquete saudável, fruto da preparação dominical.' },
+                { time: '19:30', title: 'O Estudo dos Tomos Antigos', icon: '📜', detail: '2 horas de imersão nos conhecimentos do concurso.' },
+                { time: '21:30', title: 'A Recompensa do Conquistador', icon: '🎲', detail: 'Tempo para jogos ou outros entretenimentos.' },
+                { time: '22:00', title: 'O Ritual do Crepúsculo', icon: '🕯️', detail: 'Leitura de um códice físico. As luzes místicas dos ecrãs se apagam.' },
+                { time: '22:30', title: 'O Mergulho no Sono', icon: '🌙', detail: 'Entregar-se à noite para restaurar a magia.' }
+            ],
+            office: [
+                { time: '06:00', title: 'O Despertar do Viajante', icon: '🏺', detail: 'Ritual matinal rápido e preciso.' },
+                { time: '06:30', title: 'O Armar e Partir', icon: '🍞', detail: 'Tomar o desjejum e iniciar a peregrinação.' },
+                { time: '07:10', title: 'A Carruagem do Saber', icon: '🗺️', detail: 'Leitura de tomos durante a jornada.' },
+                { time: '08:00', title: 'Deveres na Cidadela', icon: '✒️', detail: 'Serviço ao reino profissional.' },
+                { time: '12:00', title: 'A Pausa do Estratega', icon: '🍲', detail: 'Repasto trazido do castelo para manter a força.' },
+                { time: '13:00', title: 'Deveres na Cidadela', icon: '✒️', detail: 'Continuação do serviço ao reino.' },
+                { time: '15:00', title: 'O Retorno ao Lar', icon: '🗺️', detail: 'Mais uma jornada de leitura e sabedoria.' },
+                { time: '15:50', title: 'A Chegada do Guerreiro', icon: '⚔️', detail: 'Ao cruzar os portões, vestir a armadura de treino.' },
+                { time: '16:15', title: 'A Prova de Força', icon: '⚒️', detail: 'Forjar o corpo no templo de ferro.' },
+                { time: '17:30', title: 'Rituais Pós-Batalha', icon: '🍴', detail: 'Abluções, poção de recuperação e a ceia.' },
+                { time: '19:30', title: 'O Estudo dos Tomos Antigos', icon: '📜', detail: '2 horas de imersão no santuário do saber.' },
+                { time: '21:30', title: 'A Recompensa do Viajante', icon: '🎲', detail: 'Tempo para lazer e entretenimento.' },
+                { time: '22:00', title: 'O Ritual do Crepúsculo', icon: '🕯️', detail: 'Leitura de um códice para acalmar a alma.' },
+                { time: '22:30', title: 'O Mergulho no Sono', icon: '🌙', detail: 'As estrelas guiam o seu descanso.' }
+            ],
+            weekend: [
+                { time: 'SÁB 08:00', title: 'Desjejum para a Justa', icon: '🍞', detail: 'Refeição para aguçar a mente para o desafio.' },
+                { time: 'SÁB 09:00', title: 'O Grande Torneio', icon: '📜', detail: '4 horas de simulado, a justa do conhecimento.' },
+                { time: 'SÁB 13:00', title: 'Banquete e Celebração', icon: '🍖', detail: 'Refeição livre e o descanso do campeão.' },
+                { time: 'SÁB 14:30', title: 'Liberdade e Aventura', icon: '🍻', detail: 'Tempo para missões pessoais, confrarias ou repouso.' },
+                { time: 'DOM 09:00', title: 'O Despertar Sereno', icon: '☀️', detail: 'O sol saúda o herói, sem o chamado do dever.' },
+                { time: 'DOM 10:00', title: 'A Purificação do Santuário', icon: '🧹', detail: '2 horas para ordenar e limpar os seus domínios.' },
+                { time: 'DOM 12:00', title: 'Repasto Leve', icon: '🍲', detail: 'Almoço para manter o corpo ágil.' },
+                { time: 'DOM 14:00', title: 'A Alquimia da Semana', icon: '🔥', detail: 'Preparar as poções e rações para as jornadas vindouras.' },
+                { time: 'DOM 16:00', title: 'O Conselho de Guerra', icon: '⏳', detail: 'Rever os mapas, traçar as estratégias da semana.' },
+                { time: 'DOM 17:00', title: 'Tempo de Paz', icon: '🌿', detail: 'Relaxar antes do início de uma nova demanda.' },
+                { time: 'DOM 21:00', title: 'Leituras Vespertinas', icon: '🕯️', detail: 'Histórias e lendas para inspirar a alma.' },
+                { time: 'DOM 22:00', title: 'O Repouso Profundo', icon: '🌙', detail: 'Adormecer para sonhar com novas conquistas.' }
+            ]
+        },
+        timeDistribution: {
+            home: { labels: ['Dever', 'Estudo', 'Forja', 'Lazer', 'Essencial'], data: [6, 2, 1.25, 3, 11.75] },
+            office: { labels: ['Dever', 'Estudo', 'Forja', 'Lazer', 'Jornada', 'Essencial'], data: [6, 2, 1.25, 2.5, 1.6, 10.65] },
+            weekend: { labels: ['Torneio', 'Alquimia', 'Aventura', 'Essencial'], data: [4, 4, 10, 30] } // 48h total
+        },
+        pillars: [
+            { id: 1, title: 'O Estandarte da Clareza', icon: '🏹', content: 'Para que um chamado seja atendido, ele deve ecoar com clareza. Use o <strong>Juramento dos Hábitos</strong>: "Após a [missão atual], eu cumprirei a [nova missão]". E forje o seu ambiente: que cada ferramenta da sua próxima demanda esteja à vista, como uma espada desembainhada.' },
+            { id: 2, title: 'O Estandarte do Encantamento', icon: '✨', content: 'Uma missão deve cativar a alma. Declare a sua identidade: "Eu sou um Sábio-Guerreiro". Cada prova de força, cada página virada, é um voto para esta verdade. Una o dever ao prazer: "Apenas ouvirei as sagas dos bardos enquanto forjo meu corpo no templo de ferro".' },
+            { id: 3, title: 'O Estandarte da Senda Plana', icon: '⚜️', content: 'Até a mais longa jornada começa com um único passo. Use o <strong>Decreto dos Dois Minutos</strong>: "Estudar os tomos" torna-se "Abrir o pergaminho". O objetivo é dominar a arte da partida. Lembre-se: a constância de uma marcha supera a velocidade de uma corrida.' },
+            { id: 4, title: 'O Estandarte da Glória', icon: '🏆', content: 'O espírito anseia pelo sabor da vitória. Ofereça uma <strong>Recompensa Imediata</strong>: 15 minutos nos reinos dos jogos após decifrar os tomos antigos. Erga um totem de seu progresso: marque cada dia de vitória num calendário. Que a corrente de seus triunfos jamais seja quebrada.' }
+        ],
+        strategies: [
+            { icon: '⚒️', title: 'A Prova de Força', content: 'Decrete 5 justas semanais para honrar o corpo e a alma. O juramento é claro: "Após o labor, visto a armadura de treino". A bolsa de batalha deve estar sempre pronta, um chamado silencioso à ação.' },
+            { icon: '📜', title: 'O Santuário do Saber', content: 'Designe um local sagrado para o estudo, livre das tentações do mundo. Use o ritual Pomodoro: 25 minutos de imersão, 5 de contemplação. O juramento: "Após a ceia, adentro o meu santuário".' },
+            { icon: '🕯️', title: 'O Ritual do Crepúsculo', content: 'Faça da leitura um rito sagrado antes do sono. Um códice físico acalma o espírito e afasta os demônios da insónia. Um sono profundo é o elixir que restaura a sua força de vontade para as batalhas do amanhã.' },
+            { icon: '🔥', title: 'A Alquimia Dominical', content: 'A preparação das rações no dia do sol é um ato de magia que liberta a sua semana. Decidir o sustento com antecedência preserva a sua energia para as grandes missões. Siga o mapa de refeições.' },
+            { icon: '🎲', title: 'As Recompensas Flexíveis', content: 'O estudo dos glifos (DataCamp) e os jogos são os tesouros ganhos, não o tributo a ser pago. Reivindique-os *após* as grandes provas, como o ouro encontrado no fim de uma masmorra.' },
+            { icon: '🧹', title: 'O Reset do Reino', content: 'Unir a purificação do santuário (limpeza) e a alquimia das refeições no domingo é um poderoso ritual de renovação. Começar a semana com ordem e provisões é começar com vantagem estratégica.' }
+        ],
+        mealPlan: [
+            { meal: 'Desjejum', segQuaSex: 'Omelete c/ cogumelos', terQui: 'Iogurte grego c/ frutos e aveia', fimDeSemana: 'Panquecas de aveia' },
+            { meal: 'Lanche 1', segQuaSex: 'Maçã c/ manteiga de amendoim', terQui: 'Punhado de amêndoas', fimDeSemana: 'Fruta da época' },
+            { meal: 'Almoço', segQuaSex: 'Frango grelhado c/ arroz integral e brócolos', terQui: 'Salada de frango desfiado com mix de folhas', fimDeSemana: 'Refeição livre' },
+            { meal: 'Lanche 2', segQuaSex: 'Iogurte grego', terQui: 'Ovo cozido', fimDeSemana: 'Palitos de pepino e cenoura' },
+            { meal: 'Jantar', segQuaSex: 'Salmão assado c/ batata-doce', terQui: 'Sopa de legumes c/ frango', fimDeSemana: 'Refeição livre' }
+        ],
+        shoppingList: [
+            { category: 'Caça e Pesca', items: ['Ovos', 'Peitos de frango', 'Salmão', 'Iogurte'] },
+            { category: 'Da Horta', items: ['Cogumelos', 'Brócolos', 'Batata-doce', 'Cenouras', 'Mix de folhas verdes', 'Tomate', 'Pepino'] },
+            { category: 'Do Pomar', items: ['Maçãs', 'Bananas', 'Frutos vermelhos'] },
+            { category: 'Grãos e Sementes', items: ['Aveia', 'Arroz integral', 'Amêndoas'] },
+            { category: 'Tesouros', items: ['Manteiga de amendoim', 'Azeite'] }
+        ]
+    };
+
+    const navButtons = document.querySelectorAll('.nav-button');
+    const contentSections = document.querySelectorAll('.content-section');
+    const dayToggleButtons = document.querySelectorAll('.day-toggle-button');
+    const timelineContainer = document.getElementById('timeline-container');
+    const pillarsContainer = document.getElementById('pillars-container');
+    const strategiesContainer = document.getElementById('strategies-container');
+    const mealPlanBody = document.getElementById('meal-plan-body');
+    const shoppingListContainer = document.getElementById('shopping-list-container');
+    
+    let timeChart;
+    let currentDayType = 'home';
+
+    function switchTab(targetId) {
+        navButtons.forEach(button => button.classList.toggle('active', button.dataset.target === targetId));
+        contentSections.forEach(section => section.classList.toggle('active', section.id === targetId));
+    }
+
+    function switchDayView(dayType) {
+        currentDayType = dayType;
+        dayToggleButtons.forEach(button => button.classList.toggle('active', button.dataset.day === dayType));
+        renderTimeline(dayType);
+        updateChart(dayType);
+    }
+
+    function renderTimeline(dayType) {
+        const schedule = data.schedule[dayType];
+        timelineContainer.innerHTML = schedule.map((item, index) => `
+            <div class="flex items-start space-x-4 ${index !== schedule.length - 1 ? 'pb-8' : ''} relative">
+                <div class="flex flex-col items-center">
+                    <div class="bg-stone-700 text-amber-50 rounded-full timeline-item-dot flex items-center justify-center w-8 h-8 text-2xl z-10">${item.icon}</div>
+                    ${index !== schedule.length - 1 ? '<div class="w-0.5 h-full bg-stone-300 absolute top-8"></div>' : ''}
+                </div>
+                <div class="pt-1">
+                    <p class="font-bold header-main">${item.time} - ${item.title}</p>
+                    <p class="header-sub">${item.detail}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function updateChart(dayType) {
+        const chartData = data.timeDistribution[dayType];
+        const chartLabel = dayType === 'weekend' ? 'Equilíbrio do Reino (48h)' : 'Equilíbrio do Reino (24h)';
+        if (timeChart) {
+            timeChart.data.labels = chartData.labels;
+            timeChart.data.datasets[0].data = chartData.data;
+            timeChart.data.datasets[0].label = chartLabel;
+            timeChart.update();
+        } else {
+            const ctx = document.getElementById('timeDistributionChart').getContext('2d');
+            timeChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [{
+                        label: chartLabel,
+                        data: chartData.data,
+                        backgroundColor: ['#5D4037', '#8C2B2B', '#C89B3C', '#795548', '#4E342E', '#A1887F'],
+                        borderColor: '#FDF6E3',
+                        borderWidth: 4,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: { size: 12, family: "'EB Garamond', serif" },
+                                color: '#4E4237'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed !== null) { label += context.parsed.toFixed(1) + 'h'; }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    function renderPillars() {
+        pillarsContainer.innerHTML = data.pillars.map(pillar => `
+            <div class="border border-stone-400 rounded-lg bg-stone-50/20">
+                <button class="w-full flex justify-between items-center text-left p-4 focus:outline-none" onclick="togglePillar(${pillar.id})">
+                    <span class="text-lg font-bold flex items-center header-main"><span class="text-2xl mr-3">${pillar.icon}</span> ${pillar.title}</span>
+                    <svg id="arrow-${pillar.id}" class="w-5 h-5 transform transition-transform text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div id="content-${pillar.id}" class="px-4 pb-4 text-stone-700 hidden">
+                    <p>${pillar.content}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    window.togglePillar = function(id) {
+        const content = document.getElementById(`content-${id}`);
+        const arrow = document.getElementById(`arrow-${id}`);
+        content.classList.toggle('hidden');
+        arrow.classList.toggle('rotate-180');
+    }
+
+    function renderStrategies() {
+        strategiesContainer.innerHTML = data.strategies.map(strategy => `
+            <div class="bg-stone-200/50 p-6 rounded-xl border border-stone-300">
+                <div class="text-4xl mb-3">${strategy.icon}</div>
+                <h3 class="font-bold text-lg mb-2 header-main">${strategy.title}</h3>
+                <p class="text-stone-700">${strategy.content}</p>
+            </div>
+        `).join('');
+    }
+
+    function renderMealPlan() {
+        mealPlanBody.innerHTML = data.mealPlan.map(row => `
+            <tr class="bg-stone-50/30 border-b border-stone-300 hover:bg-stone-200/50">
+                <td class="py-4 px-6 font-medium text-stone-800">${row.meal}</td>
+                <td class="py-4 px-6">${row.segQuaSex}</td>
+                <td class="py-4 px-6">${row.terQui}</td>
+                <td class="py-4 px-6">${row.fimDeSemana}</td>
+            </tr>
+        `).join('');
+    }
+
+    function renderShoppingList() {
+        shoppingListContainer.innerHTML = data.shoppingList.map(category => `
+            <div>
+                <h4 class="font-bold text-lg header-main mb-2">${category.category}</h4>
+                <ul class="list-disc list-inside text-stone-700 space-y-1">
+                    ${category.items.map(item => `<li>${item}</li>`).join('')}
+                </ul>
+            </div>
+        `).join('');
+    }
+    
+    function init() {
+        switchDayView(currentDayType);
+        renderPillars();
+        renderStrategies();
+        renderMealPlan();
+        renderShoppingList();
+    }
+
+    navButtons.forEach(button => {
+        button.addEventListener('click', () => switchTab(button.dataset.target));
+    });
+
+    dayToggleButtons.forEach(button => {
+        button.addEventListener('click', () => switchDayView(button.dataset.day));
+    });
+
+    init();
+});
+</script>
+
+</body>
+</html>
+
