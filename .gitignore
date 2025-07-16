@@ -1,0 +1,39 @@
+# ===================================================================
+# Arquivo .gitignore Padrão para Projetos Python
+# ===================================================================
+
+# 1. Ambientes Virtuais
+# Ignora a pasta do ambiente virtual, que contém caminhos absolutos
+# e é específica para cada máquina e sistema operacional.
+venv/
+env/
+*.venv
+
+# 2. Segredos e Credenciais
+# NUNCA comite chaves de API, senhas ou arquivos de credenciais.
+# Use wildcards (*) para pegar todos os arquivos com essas extensões.
+.env
+*.json
+*.pem
+
+# Se você precisar comitar um arquivo JSON específico que NÃO seja uma
+# credencial, você pode adicionar uma exceção assim:
+# !configuracoes_publicas.json
+!dicionario_fator_de_risco.json
+# 3. Cache e Arquivos Gerados pelo Python
+# Estes arquivos são gerados automaticamente durante a execução.
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 4. Caches de Ferramentas e Logs
+# Ignora a pasta de cache do webdriver-manager e arquivos de log.
+.wdm/
+*.log
+
+# 5. Arquivos de Configuração de IDEs
+# Ignora configurações específicas do editor de código de cada usuário.
+.vscode/
+.idea/
+.project

@@ -1,6 +1,47 @@
-beautifulsoup4==4.13.4
-requests==2.32.3
+# Arquivo de dependências para o Bot de Monitoramento de Notícias
+
+# --- Bibliotecas Principais ---
+
+# Para manipulação de dados em tabelas (DataFrames)
 pandas
-newspaper3k 
-openai
+
+# Para analisar feeds RSS do Google Alerts
+feedparser
+
+# Para extrair o conteúdo principal de artigos de notícias da web
+newspaper3k
+
+# Dependência do newspaper3k para limpar HTML (corrige o erro de importação)
+lxml[html_clean]
+
+# Para controlar um navegador real e evitar bloqueios de sites
+playwright
+
+webdriver-manager
+
+# Para controlar o navegardor na extração do rss do gnews
+selenium
+# --- Bibliotecas do Google ---
+
+# Para interagir com a API do Google Gemini
 google-generativeai
+
+# Para interagir com as Planilhas Google (Google Sheets)
+gspread
+
+# Para autenticação com os serviços do Google (necessário para gspread)
+google-auth-oauthlib
+
+# Cliente HTTP, usado aqui para enviar alertas para o Google Chat
+httplib2
+
+# --- Utilitários ---
+
+# Para carregar variáveis de ambiente de um arquivo .env (por segurança)
+python-dotenv
+
+#Para rodar a janela interativa
+ipykernel
+
+# Para burlar o cloudfare
+cloudscraper

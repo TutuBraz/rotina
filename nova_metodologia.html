@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infográfico: Classificação Avançada de Risco Reputacional</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <!-- Palette: Brilliant Blues -->
+    <!-- Narrative Plan:
+        1.  Introduction: Hook with the problem of oversimplified risk classification.
+        2.  Section 1 (Deconstructing Risk): Explain core concepts (Identity, Image, Reputation) and introduce the 7 key risk factors.
+        3.  Section 2 (Measuring Risk): Detail the 5x5 Risk Matrix and the concept of Inherent vs. Residual risk.
+        4.  Section 3 (Industry Benchmarks): Compare rating scales from Sustainalytics, RepRisk, and MSCI.
+        5.  Section 4 (The Path Forward): Present the multifactorial scoring formula and a phased implementation roadmap.
+        6.  Conclusion: Summarize the key takeaway about building a hybrid, robust model.
+    -->
+    <!-- Visualization Plan:
+        -   7 Risk Factors -> Radar Chart (Chart.js) -> Goal: Compare, Justification: Excellent for showing strengths/weaknesses across multiple fixed categories.
+        -   Risk Matrix -> Styled HTML Table -> Goal: Organize, Justification: Direct, intuitive representation of a heatmap grid. NO SVG.
+        -   Inherent vs. Residual Flow -> Styled HTML Divs -> Goal: Organize, Justification: Clear process flow using basic, styled blocks. NO SVG/Mermaid JS.
+        -   Industry Scale Comparison -> Horizontal Bar Chart (Chart.js) -> Goal: Compare, Justification: Effectively compares the nature and granularity of different categorical/numerical scales.
+        -   Implementation Roadmap -> Styled HTML Divs (Timeline) -> Goal: Change, Justification: Shows a sequence of events over time effectively. NO SVG.
+    -->
+    <!-- NEITHER Mermaid JS NOR SVG were used anywhere in the output. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-[#003f5c] mb-4">Classificação Avançada de Risco Reputacional</h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">Um guia visual para construir modelos de linguagem que superam as escalas simplistas e entregam inteligência de risco acionável para gestoras de ativos.</p>
+        </header>
+
+        <main class="space-y-12">
+            
+            <section id="deconstructing-risk">
+                <div class="bg-white rounded-lg shadow-md p-6 md:p-8">
+                    <h2 class="text-3xl font-bold text-[#2f4b7c] mb-2">Seção 1: A Anatomia do Risco</h2>
+                    <p class="text-gray-600 mb-8">O risco reputacional não é um evento isolado, mas uma consequência de falhas em outras áreas. Para classificar o risco, um modelo deve primeiro entender seus componentes fundamentais e as suas causas raiz.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        <div>
+                            <h3 class="text-xl font-semibold text-[#665191] mb-4">A Taxonomia do Risco para Gestoras</h3>
+                            <p class="text-gray-600 mb-4">Uma classificação eficaz exige uma taxonomia granular. Em vez de "risco" ou "não risco", o modelo deve identificar o fator primário do evento. Este gráfico de radar visualiza a exposição hipotética de uma gestora a estes sete fatores de risco críticos.</p>
+                            <p class="text-gray-600">Ao identificar a categoria específica, a análise se torna mais precisa e permite uma resposta direcionada, movendo-se além de uma avaliação puramente baseada em sentimento.</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="riskTaxonomyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="measuring-risk">
+                <div class="bg-white rounded-lg shadow-md p-6 md:p-8">
+                    <h2 class="text-3xl font-bold text-[#2f4b7c] mb-2">Seção 2: Como Medir o Risco de Forma Estruturada</h2>
+                    <p class="text-gray-600 mb-8">Para mover da identificação para a quantificação, utilizamos frameworks padrão da indústria. A Matriz de Risco e a distinção entre risco inerente e residual são ferramentas essenciais para priorizar ameaças.</p>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                        <div class="w-full">
+                            <h3 class="text-xl font-semibold text-[#a05195] mb-4">Matriz de Probabilidade e Impacto 5x5</h3>
+                            <p class="text-gray-600 mb-4">Esta matriz é o padrão ouro para avaliação de risco. Ela plota a probabilidade de um evento ocorrer contra a severidade de seu impacto, criando um mapa de calor que destaca os riscos que exigem atenção imediata. A pontuação é o produto dos dois eixos (Probabilidade × Impacto).</p>
+                             <div class="overflow-x-auto">
+                                <table class="w-full border-collapse text-center">
+                                    <thead>
+                                        <tr>
+                                            <th class="border p-2 bg-gray-100" rowspan="2" colspan="2"></th>
+                                            <th class="border p-2 bg-gray-200" colspan="5">Impacto (Severidade)</th>
+                                        </tr>
+                                        <tr>
+                                            <th class="border p-2 text-xs bg-gray-100">1-Insignificante</th>
+                                            <th class="border p-2 text-xs bg-gray-100">2-Menor</th>
+                                            <th class="border p-2 text-xs bg-gray-100">3-Moderado</th>
+                                            <th class="border p-2 text-xs bg-gray-100">4-Grave</th>
+                                            <th class="border p-2 text-xs bg-gray-100">5-Catastrófico</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="border p-2 bg-gray-200" rowspan="5" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg);">Probabilidade</td>
+                                            <td class="border p-2 text-xs bg-gray-100">5-Quase Certo</td>
+                                            <td class="border p-2 bg-yellow-300">Médio</td>
+                                            <td class="border p-2 bg-orange-400">Alto</td>
+                                            <td class="border p-2 bg-red-500 text-white">Severo</td>
+                                            <td class="border p-2 bg-red-600 text-white">Severo</td>
+                                            <td class="border p-2 bg-red-700 text-white">Severo</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="border p-2 text-xs bg-gray-100">4-Provável</td>
+                                            <td class="border p-2 bg-green-400">Baixo</td>
+                                            <td class="border p-2 bg-yellow-300">Médio</td>
+                                            <td class="border p-2 bg-orange-400">Alto</td>
+                                            <td class="border p-2 bg-red-500 text-white">Severo</td>
+                                            <td class="border p-2 bg-red-600 text-white">Severo</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="border p-2 text-xs bg-gray-100">3-Possível</td>
+                                            <td class="border p-2 bg-green-300">Baixo</td>
+                                            <td class="border p-2 bg-yellow-300">Médio</td>
+                                            <td class="border p-2 bg-yellow-400">Médio</td>
+                                            <td class="border p-2 bg-orange-400">Alto</td>
+                                            <td class="border p-2 bg-red-500 text-white">Severo</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="border p-2 text-xs bg-gray-100">2-Improvável</td>
+                                            <td class="border p-2 bg-green-200">Baixo</td>
+                                            <td class="border p-2 bg-green-300">Baixo</td>
+                                            <td class="border p-2 bg-yellow-300">Médio</td>
+                                            <td class="border p-2 bg-yellow-400">Médio</td>
+                                            <td class="border p-2 bg-orange-400">Alto</td>
+                                        </tr>
+                                         <tr>
+                                            <td class="border p-2 text-xs bg-gray-100">1-Raro</td>
+                                            <td class="border p-2 bg-green-200">Baixo</td>
+                                            <td class="border p-2 bg-green-200">Baixo</td>
+                                            <td class="border p-2 bg-green-300">Baixo</td>
+                                            <td class="border p-2 bg-yellow-300">Médio</td>
+                                            <td class="border p-2 bg-yellow-400">Médio</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-[#d45087] mb-4">Risco Inerente vs. Risco Residual</h3>
+                            <p class="text-gray-600 mb-4">A avaliação não termina no evento. A qualidade da resposta da empresa é um modificador crucial que determina o risco final (residual). Um LLM avançado deve ser capaz de avaliar tanto o evento quanto a resposta.</p>
+                            <div class="flex flex-col items-center space-y-2">
+                                <div class="w-full text-center p-4 border-2 border-[#d45087] rounded-lg bg-red-50">
+                                    <p class="font-bold">Evento de Risco</p>
+                                    <p class="text-sm text-gray-600">(ex: Vazamento de dados)</p>
+                                </div>
+                                <div class="text-3xl text-[#d45087] font-thin">↓</div>
+                                <div class="w-full text-center p-4 border-2 border-dashed border-gray-400 rounded-lg">
+                                    <p class="font-bold">Risco Inerente</p>
+                                    <p class="text-sm text-gray-600">(Avaliação inicial baseada no evento)</p>
+                                </div>
+                                <div class="text-3xl text-gray-400 font-thin">↓</div>
+                                <div class="w-full text-center p-3 bg-blue-100 border-2 border-blue-400 rounded-lg">
+                                    <p class="font-bold">Controle / Resposta da Gestão</p>
+                                    <p class="text-sm text-gray-600">(ex: Transparência, medidas corretivas)</p>
+                                </div>
+                                 <div class="text-3xl text-blue-400 font-thin">↓</div>
+                                <div class="w-full text-center p-4 border-2 border-[#ff7c43] rounded-lg bg-green-50">
+                                    <p class="font-bold">Risco Residual</p>
+                                    <p class="text-sm text-gray-600">(Risco final após a resposta)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="industry-benchmarks">
+                <div class="bg-white rounded-lg shadow-md p-6 md:p-8">
+                    <h2 class="text-3xl font-bold text-[#2f4b7c] mb-2">Seção 3: Aprendendo com os Líderes da Indústria</h2>
+                    <p class="text-gray-600 mb-8">Não precisamos reinventar a roda. Agências de rating como Sustainalytics, RepRisk e MSCI oferecem metodologias robustas e validadas pelo mercado. A análise comparativa de suas escalas fornece um blueprint para um sistema superior.</p>
+                    
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        <div>
+                           <h3 class="text-xl font-semibold text-[#f95d6a] mb-4">Comparativo das Escalas de Rating</h3>
+                           <p class="text-gray-600 mb-4">Este gráfico compara as abordagens metodológicas dos principais provedores de rating de risco. Cada um oferece uma perspectiva diferente: a Sustainalytics foca no risco absoluto não gerenciado, a RepRisk em um índice dinâmico de controvérsia e a MSCI em uma classificação relativa aos pares da indústria.</p>
+                           <p class="text-gray-600">Um modelo híbrido, que combine o melhor de cada abordagem, pode criar um sistema de classificação proprietário mais robusto e nuançado.</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="industryComparisonChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+             <section id="path-forward">
+                <div class="bg-white rounded-lg shadow-md p-6 md:p-8">
+                    <h2 class="text-3xl font-bold text-[#2f4b7c] mb-2">Seção 4: O Caminho para um Modelo Avançado</h2>
+                    <p class="text-gray-600 mb-8">Com os fundamentos e benchmarks estabelecidos, podemos projetar um sistema de pontuação multifatorial e um roteiro de implementação para construir um classificador de risco de última geração.</p>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                        <div class="space-y-8">
+                           <div>
+                                <h3 class="text-xl font-semibold text-[#ff7c43] mb-4">Fórmula de Pontuação de Risco Composta</h3>
+                                <p class="text-gray-600 mb-4">Uma pontuação final deve ser mais do que apenas um rótulo; deve ser um cálculo que considera múltiplos fatores. O papel do LLM é gerar as entradas para esta fórmula, avaliando o evento, o contexto da notícia e a qualidade da resposta da gestão.</p>
+                                <div class="bg-gray-100 p-4 rounded-lg text-center text-sm md:text-base font-mono">
+                                    <span class="font-bold text-[#003f5c]">Risco_Final</span> = (<span class="text-[#665191]">Impacto_Inerente</span> + <span class="text-[#d45087]">Modificador_Contexto</span>) × (1 - <span class="text-[#2f4b7c]">Eficácia_Gestão</span>)
+                                </div>
+                           </div>
+                           <div>
+                                <h3 class="text-xl font-semibold text-[#ffa600] mb-4">Exemplo de Classificação Prática</h3>
+                                <p class="text-gray-600 mb-4">A tabela abaixo demonstra como o modelo multifatorial funciona na prática, transformando notícias brutas em uma classificação de risco calculada e categorizada, fornecendo uma inteligência clara e acionável.</p>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left text-sm">
+                                        <thead class="bg-gray-100">
+                                            <tr>
+                                                <th class="p-2">Evento</th>
+                                                <th class="p-2">Impacto (0-100)</th>
+                                                <th class="p-2">Gestão (0-0.5)</th>
+                                                <th class="p-2">Risco Final</th>
+                                                <th class="p-2">Categoria</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="border-b">
+                                                <td class="p-2">Investigação regulatória</td>
+                                                <td class="p-2 text-center">85</td>
+                                                <td class="p-2 text-center">0.1</td>
+                                                <td class="p-2 text-center font-bold">~92</td>
+                                                <td class="p-2 text-center"><span class="px-2 py-1 bg-red-600 text-white rounded-full text-xs">Severo</span></td>
+                                            </tr>
+                                            <tr class="border-b">
+                                                <td class="p-2">Post viral de ex-funcionário</td>
+                                                <td class="p-2 text-center">60</td>
+                                                <td class="p-2 text-center">0.4</td>
+                                                <td class="p-2 text-center font-bold">~32</td>
+                                                <td class="p-2 text-center"><span class="px-2 py-1 bg-yellow-400 text-black rounded-full text-xs">Médio</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="p-2">Parceria com Fintech</td>
+                                                <td class="p-2 text-center">0</td>
+                                                <td class="p-2 text-center">N/A</td>
+                                                <td class="p-2 text-center font-bold">0</td>
+                                                <td class="p-2 text-center"><span class="px-2 py-1 bg-green-300 text-black rounded-full text-xs">Nenhum</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                           </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-xl font-semibold text-[#ff7c43] mb-4">Roteiro de Implementação em Fases</h3>
+                            <p class="text-gray-600 mb-4">A construção de um sistema sofisticado é uma jornada. Este plano em fases permite uma evolução pragmática, desde um Produto Mínimo Viável (MVP) até um motor de risco preditivo.</p>
+                            <div class="relative border-l-2 border-dashed border-[#ff7c43] ml-4 pl-8 space-y-10">
+                                <div class="relative">
+                                    <div class="absolute -left-11 top-0 w-6 h-6 bg-[#ff7c43] rounded-full flex items-center justify-center text-white font-bold">1</div>
+                                    <h4 class="font-bold text-[#003f5c]">Fase 1: Classificador Fundacional (MVP)</h4>
+                                    <p class="text-gray-600 text-sm">Desenvolver a taxonomia de eventos e treinar o LLM para classificar notícias, substituindo o sistema atual de três níveis por um classificador de eventos robusto.</p>
+                                </div>
+                                <div class="relative">
+                                     <div class="absolute -left-11 top-0 w-6 h-6 bg-[#d45087] rounded-full flex items-center justify-center text-white font-bold">2</div>
+                                    <h4 class="font-bold text-[#003f5c]">Fase 2: Enriquecimento com Contexto</h4>
+                                    <p class="text-gray-600 text-sm">Adicionar nuances à pontuação integrando análise de sentimento, credibilidade da fonte e um banco de dados de eventos históricos para detectar repetições.</p>
+                                </div>
+                                <div class="relative">
+                                     <div class="absolute -left-11 top-0 w-6 h-6 bg-[#665191] rounded-full flex items-center justify-center text-white font-bold">3</div>
+                                    <h4 class="font-bold text-[#003f5c]">Fase 3: Motor de Risco Avançado</h4>
+                                    <p class="text-gray-600 text-sm">Implementar a fórmula de risco composta, treinando o LLM para avaliar a qualidade da resposta da gestão e modelar o "Risco Não Gerenciado".</p>
+                                </div>
+                                <div class="relative">
+                                     <div class="absolute -left-11 top-0 w-6 h-6 bg-[#2f4b7c] rounded-full flex items-center justify-center text-white font-bold">4</div>
+                                    <h4 class="font-bold text-[#003f5c]">Fase 4: A Fronteira Preditiva</h4>
+                                    <p class="text-gray-600 text-sm">Correlacionar as pontuações de risco com métricas financeiras (desempenho de ações, fluxos de AUM) para construir um modelo que preveja o impacto financeiro.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer class="text-center mt-16 text-gray-500 text-sm">
+            <p>Infográfico gerado para análise de risco reputacional no setor de gestão de ativos.</p>
+            <p>&copy; 2025. Todos os direitos reservados.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const brilliantBluesPalette = ['#003f5c', '#58508d', '#bc5090', '#ff6361', '#ffa600', '#665191', '#a05195'];
+        const tooltipCallback = {
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const item = tooltipItems[0];
+                            let label = item.chart.data.labels[item.dataIndex];
+                            if (Array.isArray(label)) {
+                              return label.join(' ');
+                            } else {
+                              return label;
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        function wrapLabel(str, maxWidth) {
+            if (str.length <= maxWidth) {
+                return str;
+            }
+            const words = str.split(' ');
+            const lines = [];
+            let currentLine = '';
+            for (const word of words) {
+                if ((currentLine + ' ' + word).trim().length > maxWidth) {
+                    lines.push(currentLine.trim());
+                    currentLine = word;
+                } else {
+                    currentLine = (currentLine + ' ' + word).trim();
+                }
+            }
+            if (currentLine) {
+                lines.push(currentLine.trim());
+            }
+            return lines;
+        }
+
+        const riskLabels = [
+            'Riscos de Integridade e Ética',
+            'Riscos Fiduciários e de Produto',
+            'Riscos Operacionais e de Segurança',
+            'Riscos de Governança e Liderança',
+            'Riscos Legais e de Compliance',
+            'Riscos ESG e Sociais',
+            'Riscos de Terceiros e Contágio'
+        ].map(label => wrapLabel(label, 16));
+
+        new Chart(document.getElementById('riskTaxonomyChart'), {
+            type: 'radar',
+            data: {
+                labels: riskLabels,
+                datasets: [{
+                    label: 'Exposição ao Risco (Hipotético)',
+                    data: [75, 60, 80, 50, 70, 65, 45],
+                    fill: true,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgb(255, 99, 132)',
+                    pointBackgroundColor: 'rgb(255, 99, 132)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(255, 99, 132)'
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                ...tooltipCallback,
+                elements: {
+                    line: {
+                        borderWidth: 3
+                    }
+                },
+                scales: {
+                    r: {
+                        angleLines: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        pointLabels: {
+                            font: {
+                                size: 10
+                            }
+                        },
+                        ticks: {
+                           backdropColor: 'rgba(255, 255, 255, 0.75)'
+                        }
+                    }
+                }
+            }
+        });
+
+        new Chart(document.getElementById('industryComparisonChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Sustainalytics', 'RepRisk', 'MSCI'],
+                datasets: [{
+                    label: 'Abordagem Metodológica',
+                    data: [5, 10, 7], 
+                    backgroundColor: [brilliantBluesPalette[2], brilliantBluesPalette[3], brilliantBluesPalette[4]],
+                    borderColor: ['#ffffff'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                ...tooltipCallback,
+                scales: {
+                    x: {
+                        display: false,
+                        max: 12
+                    },
+                    y: {
+                         grid: {
+                            display: false
+                         }
+                    }
+                },
+                plugins: {
+                    ...tooltipCallback.plugins,
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                         ...tooltipCallback.plugins.tooltip,
+                         callbacks: {
+                            ...tooltipCallback.plugins.tooltip.callbacks,
+                            label: function(context) {
+                                const label = context.chart.data.labels[context.dataIndex];
+                                let desc = '';
+                                if (label === 'Sustainalytics') desc = '5 níveis de risco absoluto (0-40+)';
+                                if (label === 'RepRisk') desc = 'Índice numérico de controvérsia (0-100)';
+                                if (label === 'MSCI') desc = '7 níveis de rating relativo (CCC-AAA)';
+                                return desc;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
