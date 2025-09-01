@@ -1,47 +1,37 @@
-# Arquivo de dependências para o Bot de Monitoramento de Notícias
-
 # --- Bibliotecas Principais ---
 
-# Para manipulação de dados em tabelas (DataFrames)
-pandas
+# Manipulação de dados em tabelas
+pandas>=2.0.0
 
-# Para analisar feeds RSS do Google Alerts
-feedparser
+# Parser de feeds RSS (Google Alerts, Google News, etc.)
+feedparser>=6.0.10
 
-# Para extrair o conteúdo principal de artigos de notícias da web
-newspaper3k
+# Extração de texto de notícias
+newspaper3k>=0.2.8
 
-# Dependência do newspaper3k para limpar HTML (corrige o erro de importação)
-lxml[html_clean]
+# Dependência para limpeza de HTML
+lxml[html_clean]>=4.9.3
+beautifulsoup4
 
-# Para controlar um navegador real e evitar bloqueios de sites
-playwright
+# Playwright (opcional, se quiser rodar browser sem Selenium)
+playwright>=1.46.0
 
-webdriver-manager
+# Gerenciador automático de drivers Selenium
+webdriver-manager>=4.0.1
 
-# Para controlar o navegardor na extração do rss do gnews
-selenium
-# --- Bibliotecas do Google ---
+# Selenium (extração de URLs de Google News RSS)
+selenium>=4.22.0
 
-# Para interagir com a API do Google Gemini
-google-generativeai
 
-# Para interagir com as Planilhas Google (Google Sheets)
-gspread
+# --- LangChain (para integração estruturada com LLMs) ---
+langchain-community
 
-# Para autenticação com os serviços do Google (necessário para gspread)
-google-auth-oauthlib
+# --- Cliente HTTP ---
+httplib2>=0.22.0
 
-# Cliente HTTP, usado aqui para enviar alertas para o Google Chat
-httplib2
 
 # --- Utilitários ---
+python-dotenv>=1.0.1
 
-# Para carregar variáveis de ambiente de um arquivo .env (por segurança)
-python-dotenv
 
-#Para rodar a janela interativa
-ipykernel
 
-# Para burlar o cloudfare
-cloudscraper

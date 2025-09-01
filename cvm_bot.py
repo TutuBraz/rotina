@@ -31,7 +31,7 @@ def setup_logging():
 
 PALAVRAS_CHAVE = ['Tivio', 'xp', 'vinci', 'tarpon', 'bnp', 'oceana']
 URL_BASE_CVM = "https://www.gov.br/cvm/pt-br/search?origem=form&SearchableText={}"
-CHAT_WEBHOOK_URL_MUNIN = os.getenv("CHAT_WEBHOOK_URL")
+CHAT_WEBHOOK_URL_MUNIN = os.getenv("CHAT_WEBHOOK_URL_MUNIN")
 
 # ==================== FUNÇÕES ====================
 
