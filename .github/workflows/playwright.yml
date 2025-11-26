@@ -19,11 +19,17 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies
-        run: npm install
+      - name: Instalar dependências
+        run: |
+          cd "Playwright - Custódia Bradesco"
+          npm install
 
-      - name: Install Playwright Browsers
-        uses: microsoft/playwright-github-action@v1
+      - name: Instalar Playwright Browsers
+        run: |
+          cd "Playwright - Custódia Bradesco"
+          npx playwright install --with-deps
 
-      - name: Run Playwright tests
-        run: npx playwright test tests/BradescoNaoAssistido.spec.ts --project=chromium
+      - name: Executar Playwright
+        run: |
+          cd "Playwright - Custódia Bradesco"
+          npx playwright test tests/BradescoNaoAssistido.spec.ts --project=chromium
