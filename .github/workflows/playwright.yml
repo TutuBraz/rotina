@@ -11,9 +11,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout do código
+      - name: Checkout repo
         uses: actions/checkout@v4
-    
-      - name: Debug listar pastas
-        run: ls -R .
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Instalar dependências
+        run: |
+          cd "Playwright - Custódia Bradesco"
+          npm install
+
+      - name: Instalar Playwright Browsers
+        run: |
+          cd "Playwright - Custódia Bradesco"
+          npx playwright install --with-deps
+
+      - name: Executar Playwright
+        run: |
+          cd "Playwright - Custódia Bradesco"
+          npx playwright test tests/BradescoNaoAssistido.spec.ts --project=chromium
