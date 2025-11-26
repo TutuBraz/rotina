@@ -2,7 +2,8 @@ name: Playwright Tests
 
 on:
   schedule:
-    - cron: "0 9 * * 3-0"   # 06:00 da manhã no horário de Brasília (Wed–Sun)
+    - cron: "0 9 * * 3-6" 
+    - cron: "0 9 * * 0"  
   workflow_dispatch:         # opcional: permite rodar manualmente
 
 jobs:
