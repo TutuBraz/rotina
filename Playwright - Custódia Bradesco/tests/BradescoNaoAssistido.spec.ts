@@ -171,7 +171,7 @@ test('Bradesco custódia', async ({ page }) => {
   // Corpo do e-mail
   const mailOptions = {
     from: '"Automação Ceres" <rpa@ceres.org.br>',
-    to: '"caio.castro@ceres.org.br"',
+    to: 'caio.castro@ceres.org.br, pedro.silva@ceres.org.br, guilherme.pereira@ceres.org.br',
     subject: `Arquivos Bradesco Custódia - ${diaOntem}/${mesOntem}/${anoOntem}`,
     text: `Segue em anexo os arquivos extraídos pela automação 
   Resumo dos Arquivos: 
