@@ -22,7 +22,7 @@ test('Bradesco custódia', async ({ page }) => {
   await page.locator('#param1').fill('WGS83837');
   await page.locator('#param1').press('Enter');
   await page.locator('#param2').click();
-  await page.locator('#param2').fill('Getec@1473');
+  await page.locator('#param2').fill('Getec@7314');
   await page.locator('#param2').press('Enter');
   //Acessar Página XML Anbima
   await page.getByRole('link', { name: 'Custódia e Controladoria de' }).click();
