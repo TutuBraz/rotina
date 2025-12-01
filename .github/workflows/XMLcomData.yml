@@ -1,0 +1,40 @@
+name: Playwright Manual
+
+on:
+  workflow_dispatch:
+    inputs:
+      dataExecucao:
+        description: "Informe a data no formato DD/MM/AAAA"
+        required: true
+        type: string
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Instalar dependências
+        run: |
+          cd "Playwright - Custódia Bradesco"
+          npm install
+
+      - name: Instalar Playwright Browsers
+        run: |
+          cd "Playwright - Custódia Bradesco"
+          npx playwright install --with-deps
+
+      - name: Executar teste com DATA BR
+        env:
+          DATA: ${{ github.event.inputs.dataExecucao }}
+        run: |
+          cd "Playwright - Custódia Bradesco"
+          echo "Data informada: $DATA"
+          npx playwright test tests/BradescoAssistido.spec.ts --project=chromium
