@@ -4,7 +4,22 @@ on:
   workflow_dispatch:
     inputs:
       dataExecucao:
-        description: "Informe a data no formato DD/MM/AAAA"
+        description: "Informe a data (DD/MM/AAAA)"
+        required: true
+        type: string
+
+      usuarioBradesco:
+        description: "Usuário Bradesco"
+        required: true
+        type: string
+
+      senhaBradesco:
+        description: "Senha Bradesco"
+        required: true
+        type: secret
+
+      emailDestino:
+        description: "E-mail para envio dos arquivos"
         required: true
         type: string
 
@@ -31,10 +46,14 @@ jobs:
           cd "Playwright - Custódia Bradesco"
           npx playwright install --with-deps
 
-      - name: Executar teste com DATA BR
+      - name: Executar teste com parâmetros do usuário
         env:
           DATA: ${{ github.event.inputs.dataExecucao }}
+          USER_BRADESCO: ${{ github.event.inputs.usuarioBradesco }}
+          PASS_BRADESCO: ${{ github.event.inputs.senhaBradesco }}
+          EMAIL_DESTINO: ${{ github.event.inputs.emailDestino }}
         run: |
           cd "Playwright - Custódia Bradesco"
-          echo "Data informada: $DATA"
+          echo "Executando com data: $DATA"
+          echo "Enviando arquivos para: $EMAIL_DESTINO"
           npx playwright test tests/BradescoAssistido.spec.ts --project=chromium
