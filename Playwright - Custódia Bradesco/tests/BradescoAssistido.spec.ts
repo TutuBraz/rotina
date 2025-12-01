@@ -19,10 +19,10 @@ test('Bradesco custódia assistido', async ({ page }) => {
   //Login
   await page.goto('https://bc2.custodia.bradesco/calilogin/login.jsf');
   await page.locator('#param1').click();
-  await page.locator('#param1').fill('WGS83837');
+  await page.locator('#param1').fill(process.env.USER_BRADESCO!);
   await page.locator('#param1').press('Enter');
   await page.locator('#param2').click();
-  await page.locator('#param2').fill('Getec@7314');
+  await page.locator('#param2').fill(process.env.PASS_BRADESCO!);
   await page.locator('#param2').press('Enter');
   //Acessar Página XML Anbima
   await page.getByRole('link', { name: 'Custódia e Controladoria de' }).click();
@@ -171,7 +171,7 @@ test('Bradesco custódia assistido', async ({ page }) => {
   // Corpo do e-mail
   const mailOptions = {
     from: '"Automação Ceres" <rpa@ceres.org.br>',
-    to: '"caio.castro@ceres.org.br"',
+    to: process.env.EMAIL_DESTINO!,
     subject: `Arquivos Bradesco Custódia - ${diaOntem}/${mesOntem}/${anoOntem}`,
     text: `Segue em anexo os arquivos extraídos pela automação 
   Resumo dos Arquivos: 
