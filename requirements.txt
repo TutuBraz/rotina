@@ -24,7 +24,11 @@ selenium>=4.22.0
 
 
 # --- LangChain (para integração estruturada com LLMs) ---
+langchain           # <--- ADICIONADO: Pacote core do LangChain
 langchain-community
+
+# --- Cliente da API Groq ---
+groq                # <--- ADICIONADO: Cliente da API Groq
 
 # --- Cliente HTTP ---
 httplib2>=0.22.0
@@ -32,6 +36,3 @@ httplib2>=0.22.0
 
 # --- Utilitários ---
 python-dotenv>=1.0.1
-
-
-
