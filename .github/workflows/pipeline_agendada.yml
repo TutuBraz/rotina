@@ -1,4 +1,4 @@
-name: 🤖 Pipeline de Orquestração Horária (DB Local)
+name:  Pipeline de Orquestração Horária (DB Local)
 
 on:
   schedule:
@@ -8,6 +8,10 @@ on:
 jobs:
   executar_pipeline_e_commit:
     runs-on: ubuntu-latest
+    
+    # --- NOVO BLOCO DE PERMISSÕES ADICIONADO AQUI ---
+    permissions:
+      contents: write # ESSENCIAL: Permite que o bot comite e faça push
     
     timeout-minutes: 15 
     
@@ -25,41 +29,32 @@ jobs:
       - name: Instalar Dependências
         run: pip install -r requirements.txt
         
-      - name: 🚀 Executar o Orquestrador Principal
-        # Injeta os Secrets (Webhooks e Chaves de API)
+      - name:  Executar o Orquestrador Principal
         env:
-          # --- SECRETS DE WEBHOOKS ---
           CHAT_WEBHOOK_URL_SAURON: ${{ secrets.CHAT_WEBHOOK_URL_SAURON }}
           CHAT_WEBHOOK_URL_MUNIN: ${{ secrets.CHAT_WEBHOOK_URL_MUNIN }}
           CHAT_WEBHOOK_URL_HALL: ${{ secrets.CHAT_WEBHOOK_URL_HALL }}
-          
-          # --- SECRETS DE API/MODELO ---
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_MODEL: ${{ secrets.GROQ_MODEL }}
-          
-          # --- VARIÁVEL SIMPLES ---
           CHAT_TIMEOUT: 8 
           
         run: python executar_tudo.py
         
       # --- Bloco de Commit e Push dos DBs ---
-      - name: ⚙️ Configurar Git para o Commit
+      - name:  Configurar Git para o Commit
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           
-      - name: 💾 Fazer Commit e Push dos DBs Atualizados
+      - name: Fazer Commit e Push dos DBs Atualizados
         run: |
           DB_FOLDER="data/"
-          
           git add $DB_FOLDER 
-          
-          COMMIT_MSG="🤖 [Automático] DBs em 'data/' atualizados por Pipeline horária."
+          COMMIT_MSG=" [Automático] DBs em 'data/' atualizados por Pipeline horária."
           
           if ! git diff --cached --exit-code; then
             echo "Fazendo commit das alterações nos DBs..."
             git commit -m "$COMMIT_MSG"
-            
             git push
             echo "Push concluído com sucesso."
           else
