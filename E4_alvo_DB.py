@@ -17,7 +17,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # Controle de Rate Limit (ajuste aqui para evitar RateLimitError)
 MAX_WORKERS_API = int(os.getenv("MAX_WORKERS_API", 1))
-SLEEP_PER_CALL = float(os.getenv("SLEEP_API", 2.0))
+SLEEP_PER_CALL = float(os.getenv("SLEEP_API", 15.0))
 
 # --------- Utilidades de Log e Sanitização ---------
 def log(msg: str):

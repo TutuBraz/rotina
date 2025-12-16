@@ -63,3 +63,5 @@ except Exception as e:
     logger.error(f"\nOcorreu um ERRO CRÍTICO em uma das etapas: {e}")
     logger.error("A execução foi interrompida.")
     sys.exit(1) # Código de saída 1 para indicar falha no Jenkins
+
+    
