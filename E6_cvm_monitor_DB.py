@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 # ==================== BIBLIOTECAS ====================
 import os
 from time import sleep
@@ -6,18 +9,17 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
-from datetime import datetime
+from selenium.common.exceptions import TimeoutException, WebDriverException
+from datetime import datetime, date
 import requests
+import logging
 from dotenv import load_dotenv
 
-# Import para o sistema de logging
-import logging
+# --- Banco de dados ---
+import sqlite3
+from typing import Optional
 
-# ==================== CONFIGURAÇÕES ====================
-load_dotenv() 
-
-# Função para configurar o logging
+# ==================== FUNÇÃO DE LOGGING ====================
 def setup_logging():
     """Configura o logging para exibir mensagens formatadas no console."""
     logging.basicConfig(
@@ -29,11 +31,66 @@ def setup_logging():
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("selenium.webdriver.remote").setLevel(logging.WARNING)
 
-PALAVRAS_CHAVE = ['Tivio', 'xp', 'vinci', 'tarpon', 'bnp', 'oceana']
+# ==================== CONFIGURAÇÕES E PATHS (CI/CD) ====================
+load_dotenv() 
+
+PALAVRAS_CHAVE = ['Tivio', 'xp investimentos', 'vinci', 'tarpon', 'bnp', 'oceana']
 URL_BASE_CVM = "https://www.gov.br/cvm/pt-br/search?origem=form&SearchableText={}"
 CHAT_WEBHOOK_URL_MUNIN = os.getenv("CHAT_WEBHOOK_URL_MUNIN")
 
-# ==================== FUNÇÕES ====================
+# PADRÃO CI/CD: Define o caminho do DB dentro da pasta de dados persistente
+DB_FILENAME = "cvm_sent.db"
+DB_DIR = os.environ.get("DATA_DIR", "./data") 
+DB_PATH = os.path.join(DB_DIR, DB_FILENAME)
+
+# ==================== DB FUNÇÕES ====================
+
+def db_init(db_path: str = DB_PATH) -> sqlite3.Connection:
+    """
+    Cria (se não existir) e retorna a conexão com o banco SQLite que guarda
+    o que já foi enviado no dia para evitar duplicidade.
+    """
+    # NOVO: Garante que a pasta 'data' exista antes de criar o arquivo DB
+    os.makedirs(os.path.dirname(db_path), exist_ok=True) 
+    
+    con = sqlite3.connect(db_path)
+    con.execute(
+        """
+        CREATE TABLE IF NOT EXISTS sent_notifications (
+            sent_date TEXT NOT NULL,      -- formato YYYY-MM-DD
+            gestora   TEXT NOT NULL,
+            link      TEXT NOT NULL,
+            title     TEXT,
+            sent_at   TEXT NOT NULL,      -- datetime ISO-8601
+            PRIMARY KEY (sent_date, gestora, link)
+        )
+        """
+    )
+    con.commit()
+    return con
+
+def iso(d: date) -> str:
+    """Retorna data no formato YYYY-MM-DD."""
+    return d.isoformat()
+
+def already_sent_today(con: sqlite3.Connection, sent_date: date, gestora: str, link: str) -> bool:
+    cur = con.execute(
+        "SELECT 1 FROM sent_notifications WHERE sent_date = ? AND gestora = ? AND link = ?",
+        (iso(sent_date), gestora, link)
+    )
+    return cur.fetchone() is not None
+
+def mark_sent(con: sqlite3.Connection, sent_date: date, gestora: str, link: str, title: str):
+    con.execute(
+        """
+        INSERT OR IGNORE INTO sent_notifications(sent_date, gestora, link, title, sent_at)
+        VALUES(?, ?, ?, ?, ?)
+        """,
+        (iso(sent_date), gestora, link, title, datetime.utcnow().isoformat())
+    )
+    con.commit()
+
+# ==================== FUNÇÕES DE EXTRAÇÃO E ALERTA ====================
 
 def localiza_news(driver, palavra_chave):
     """Busca a notícia mais recente para uma palavra-chave no site da CVM."""
@@ -44,19 +101,18 @@ def localiza_news(driver, palavra_chave):
 
     try:
         botao_rejeitar = wait.until(EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, "button.reject-all")
-        ))
+             (By.CSS_SELECTOR, "button.reject-all")
+         ))
         botao_rejeitar.click()
         logging.info(f"[{palavra_chave}] Botão de cookies rejeitado com sucesso.")
     except TimeoutException:
-        # Isso não é um erro, apenas um estado da página.
         logging.info(f"[{palavra_chave}] Janela de cookies não encontrada ou não precisou de clique.")
         pass
 
     try:
         primeiro_resultado = wait.until(EC.presence_of_element_located(
-            (By.CSS_SELECTOR, "ul.searchResults.noticias li:first-child")
-        ))
+             (By.CSS_SELECTOR, "ul.searchResults.noticias li:first-child")
+         ))
 
         titulo_el = primeiro_resultado.find_element(By.CSS_SELECTOR, "span.titulo a")
         titulo = titulo_el.text.strip()
@@ -83,14 +139,13 @@ def localiza_news(driver, palavra_chave):
         logging.info(f"[{palavra_chave}] Nenhum resultado encontrado na página.")
         return None
     except Exception as e:
-        # Usar exc_info=True para logar o traceback completo do erro
         logging.error(f"[{palavra_chave}] Erro inesperado ao extrair dados: {e}", exc_info=True)
         return None
 
 def envia_alerta_munin(gestora, titulo, link, data):
     """Envia uma mensagem de alerta para o Google Chat."""
     if not CHAT_WEBHOOK_URL_MUNIN:
-        logging.error("A variável de ambiente CHAT_WEBHOOK_URL não está configurada. Alerta não enviado.")
+        logging.error("A variável de ambiente CHAT_WEBHOOK_URL_MUNIN não está configurada. Alerta não enviado.")
         return
 
     mensagem = {
@@ -108,16 +163,26 @@ def main():
     """Função principal que orquestra a execução do robô."""
     logging.info("="*20 + " INICIANDO ROBÔ DE MONITORAMENTO DA CVM " + "="*20)
     
+    # --- DB init ---
+    con = db_init() 
+
     service = Service()
     options = webdriver.ChromeOptions()
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage") # Estabilidade em Docker
     
-    driver = webdriver.Chrome(service=service, options=options)
-    
+    driver = None
+    try:
+        driver = webdriver.Chrome(service=service, options=options)
+    except WebDriverException as e:
+        logging.critical(f"ERRO CRÍTICO: Não foi possível iniciar o WebDriver. Erro: {e}")
+        return # Encerra o programa
+
     hoje = datetime.now().date()
     noticias_encontradas = 0
+    notificacoes_enviadas = 0
 
     try:
         for gestora in PALAVRAS_CHAVE:
@@ -125,18 +190,29 @@ def main():
             noticia = localiza_news(driver, gestora)
 
             if noticia and noticia["DataObj"] and noticia["DataObj"].date() == hoje:
-                logging.info(f"[{gestora}] Notícia encontrada para a data de hoje! Enviando alerta.")
-                envia_alerta_munin(noticia["Gestora"], noticia["Título"], noticia["Link"], noticia["Data"])
+                
+                if already_sent_today(con, hoje, gestora, noticia["Link"]):
+                    logging.info(f"[{gestora}] Notícia de hoje já notificada (evitando duplicata).")
+                else:
+                    logging.info(f"[{gestora}] Notícia encontrada para a data de hoje! Enviando alerta.")
+                    envia_alerta_munin(noticia["Gestora"], noticia["Título"], noticia["Link"], noticia["Data"])
+                    mark_sent(con, hoje, gestora, noticia["Link"], noticia["Título"])
+                    notificacoes_enviadas += 1
                 noticias_encontradas += 1
+
             elif noticia:
                 logging.info(f"[{gestora}] Notícia encontrada, mas não é de hoje (Data: {noticia['Data']}).")
 
-            sleep(1) # Pequena pausa para não sobrecarregar o site
+            sleep(1) # Pequena pausa para não sobrecarregar o site CVM
 
     finally:
-        logging.info(f"Busca finalizada. Total de {noticias_encontradas} notificações enviadas hoje.")
+        if driver:
+             driver.quit() # Garante que o driver seja fechado
+        if 'con' in locals() and con:
+             con.close() # Garante que o DB seja fechado
+        
+        logging.info(f"Busca finalizada. {noticias_encontradas} notícia(s) de hoje encontrada(s). {notificacoes_enviadas} notificação(ões) enviada(s) (sem duplicar).")
         logging.info("="*25 + " ROBÔ FINALIZADO " + "="*25)
-        driver.quit()
 
 if __name__ == "__main__":
     setup_logging()
@@ -144,5 +220,4 @@ if __name__ == "__main__":
         main()
     except Exception as e:
         logging.critical("Ocorreu um erro fatal e não tratado na execução do robô.", exc_info=True)
-        # Re-lança a exceção para que o Jenkins marque o build como falho
-        raise
+        # O programa falha, o que é o comportamento correto para um fluxo CI/CD não tratado
