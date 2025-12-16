@@ -3,6 +3,7 @@
 
 # ==================== BIBLIOTECAS ====================
 import os
+import sys # Adicionado para sys.exit (boa prática em funções main)
 from time import sleep
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service 
@@ -40,34 +41,38 @@ CHAT_WEBHOOK_URL_MUNIN = os.getenv("CHAT_WEBHOOK_URL_MUNIN")
 
 # PADRÃO CI/CD: Define o caminho do DB dentro da pasta de dados persistente
 DB_FILENAME = "cvm_sent.db"
+# NOTE: O Actions injeta as variáveis de ambiente, senão usa "./data"
 DB_DIR = os.environ.get("DATA_DIR", "./data") 
 DB_PATH = os.path.join(DB_DIR, DB_FILENAME)
 
 # ==================== DB FUNÇÕES ====================
 
-def db_init(db_path: str = DB_PATH) -> sqlite3.Connection:
+def db_init(db_path: str = DB_PATH) -> Optional[sqlite3.Connection]:
     """
-    Cria (se não existir) e retorna a conexão com o banco SQLite que guarda
-    o que já foi enviado no dia para evitar duplicidade.
+    Cria (se não existir) e retorna a conexão com o banco SQLite.
     """
-    # NOVO: Garante que a pasta 'data' exista antes de criar o arquivo DB
-    os.makedirs(os.path.dirname(db_path), exist_ok=True) 
-    
-    con = sqlite3.connect(db_path)
-    con.execute(
-        """
-        CREATE TABLE IF NOT EXISTS sent_notifications (
-            sent_date TEXT NOT NULL,      -- formato YYYY-MM-DD
-            gestora   TEXT NOT NULL,
-            link      TEXT NOT NULL,
-            title     TEXT,
-            sent_at   TEXT NOT NULL,      -- datetime ISO-8601
-            PRIMARY KEY (sent_date, gestora, link)
+    try:
+        # Garante que a pasta 'data' exista antes de criar o arquivo DB
+        os.makedirs(os.path.dirname(db_path), exist_ok=True) 
+        
+        con = sqlite3.connect(db_path)
+        con.execute(
+            """
+            CREATE TABLE IF NOT EXISTS sent_notifications (
+                sent_date TEXT NOT NULL, 
+                gestora   TEXT NOT NULL,
+                link      TEXT NOT NULL,
+                title     TEXT,
+                sent_at   TEXT NOT NULL,
+                PRIMARY KEY (sent_date, gestora, link)
+            )
+            """
         )
-        """
-    )
-    con.commit()
-    return con
+        con.commit()
+        return con
+    except Exception as e:
+        logging.critical(f"Falha crítica ao inicializar o banco de dados em '{db_path}': {e}", exc_info=True)
+        return None # Retorna None se a inicialização falhar
 
 def iso(d: date) -> str:
     """Retorna data no formato YYYY-MM-DD."""
@@ -100,19 +105,21 @@ def localiza_news(driver, palavra_chave):
     wait = WebDriverWait(driver, 10)
 
     try:
+        # Tenta rejeitar cookies (pode ser o que está mudando o layout na VM)
         botao_rejeitar = wait.until(EC.element_to_be_clickable(
              (By.CSS_SELECTOR, "button.reject-all")
-         ))
+           ))
         botao_rejeitar.click()
         logging.info(f"[{palavra_chave}] Botão de cookies rejeitado com sucesso.")
     except TimeoutException:
         logging.info(f"[{palavra_chave}] Janela de cookies não encontrada ou não precisou de clique.")
-        pass
+        pass # Segue em frente
 
     try:
+        # Tenta encontrar o primeiro resultado na lista de notícias
         primeiro_resultado = wait.until(EC.presence_of_element_located(
              (By.CSS_SELECTOR, "ul.searchResults.noticias li:first-child")
-         ))
+           ))
 
         titulo_el = primeiro_resultado.find_element(By.CSS_SELECTOR, "span.titulo a")
         titulo = titulo_el.text.strip()
@@ -136,7 +143,8 @@ def localiza_news(driver, palavra_chave):
         }
 
     except TimeoutException:
-        logging.info(f"[{palavra_chave}] Nenhum resultado encontrado na página.")
+        # Este é o cenário que está ocorrendo no Actions: elemento não encontrado
+        logging.info(f"[{palavra_chave}] Nenhum resultado encontrado na página (Timeout).")
         return None
     except Exception as e:
         logging.error(f"[{palavra_chave}] Erro inesperado ao extrair dados: {e}", exc_info=True)
@@ -154,7 +162,7 @@ def envia_alerta_munin(gestora, titulo, link, data):
     
     try:
         response = requests.post(CHAT_WEBHOOK_URL_MUNIN, json=mensagem, timeout=10)
-        response.raise_for_status() # Lança um erro para respostas HTTP 4xx/5xx
+        response.raise_for_status()
         logging.info(f"[{gestora}] Alerta enviado com sucesso!")
     except requests.exceptions.RequestException as e:
         logging.error(f"[{gestora}] Falha ao enviar alerta para o Google Chat: {e}")
@@ -165,20 +173,32 @@ def main():
     
     # --- DB init ---
     con = db_init() 
+    if not con:
+        sys.exit(1) # Encerra se a inicialização do DB falhar
 
     service = Service()
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
+    
+    # --- CONFIGURAÇÕES MELHORADAS PARA AMBIENTE ACTIONS (CI/CD) ---
+    options.add_argument("--headless=new") # Modo headless moderno, mais robusto
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage") # Estabilidade em Docker
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--window-size=1920,1080") # Garante que a página seja renderizada em um tamanho padrão
+
+    # 🚨 User-Agent Falso: Imita um navegador real para evitar bloqueios 🚨
+    options.add_argument(
+        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    )
     
     driver = None
     try:
         driver = webdriver.Chrome(service=service, options=options)
     except WebDriverException as e:
         logging.critical(f"ERRO CRÍTICO: Não foi possível iniciar o WebDriver. Erro: {e}")
-        return # Encerra o programa
+        # Se o driver não iniciar, encerra com erro
+        if con: con.close()
+        sys.exit(1)
 
     hoje = datetime.now().date()
     noticias_encontradas = 0
@@ -203,13 +223,13 @@ def main():
             elif noticia:
                 logging.info(f"[{gestora}] Notícia encontrada, mas não é de hoje (Data: {noticia['Data']}).")
 
-            sleep(1) # Pequena pausa para não sobrecarregar o site CVM
+            sleep(1) 
 
     finally:
         if driver:
-             driver.quit() # Garante que o driver seja fechado
-        if 'con' in locals() and con:
-             con.close() # Garante que o DB seja fechado
+            driver.quit()
+        if con:
+            con.close()
         
         logging.info(f"Busca finalizada. {noticias_encontradas} notícia(s) de hoje encontrada(s). {notificacoes_enviadas} notificação(ões) enviada(s) (sem duplicar).")
         logging.info("="*25 + " ROBÔ FINALIZADO " + "="*25)
@@ -221,3 +241,4 @@ if __name__ == "__main__":
     except Exception as e:
         logging.critical("Ocorreu um erro fatal e não tratado na execução do robô.", exc_info=True)
         # O programa falha, o que é o comportamento correto para um fluxo CI/CD não tratado
+        sys.exit(1) # Garante que o Actions reporte a falha

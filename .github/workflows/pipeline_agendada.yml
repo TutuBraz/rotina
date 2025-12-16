@@ -13,7 +13,7 @@ jobs:
     permissions:
       contents: write # ESSENCIAL: Permite que o bot comite e faça push
     
-    timeout-minutes: 15 
+    timeout-minutes: 30
     
     steps:
       - name: 📦 Checkout do Código
