@@ -31,6 +31,7 @@ DEFAULT_FEEDS = {
         'https://www.google.com.br/alerts/feeds/09404460482838700245/9550017878123396804',
         'https://news.google.com/rss/search?q=xp%20investimentos%20when%3A1d&hl=pt-BR&gl=BR&ceid=BR%3Apt-419'
     ],
+    'Itaú Unibanco Asset Management Ltda': '[https://www.google.com.br/alerts/feeds/09404460482838700245/4932329740573989925]',
     'Azimut Brasil Wealth Management LTDA':'[https://www.google.com.br/alerts/feeds/09404460482838700245/10530464050130697634]',
     'Franklin Templeton Investimentos':['https://www.google.com.br/alerts/feeds/09404460482838700245/18048358504902905705'],
     'BNP Paribas Asset Manegement Brasil LTDA': ['https://www.google.com.br/alerts/feeds/09404460482838700245/12308770235898626876'],
