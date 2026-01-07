@@ -52,7 +52,7 @@ try:
     logger.info("--- E6 CONCLUÍDA. ---")
 
     logger.info("\n--- 7/7: Executando E7: Monitoramento Ceres (HALL) ---")
-    CERES.main()
+    #CERES.main()
     logger.info("--- E7 CONCLUÍDA. ---")
     
     logger.info("\n=============================================")
